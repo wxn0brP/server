@@ -14,8 +14,6 @@ const express = require('express');
 const path = process.cwd();
 var app = express();
 
-app.use("/lib", express.static("D:/projekty/wwli/wwli/js"));
-app.use("/lib", express.static("D:/projekty/wwli/wwli/css"));
 app.use("/", express.static(path));
 
 const path_len = path.length + 7;
