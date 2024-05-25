@@ -1,27 +1,30 @@
-var arg = process.argv.slice(2);
+const arg = process.argv.slice(2);
 
-const czerwony = "\x1b[31m";
+const red = "\x1b[31m";
 const clear = "\x1b[0m";
-const zielony = "\x1b[32m";
-const cyjan = "\x1b[36m";
+const green = "\x1b[32m";
+const cyan = "\x1b[36m";
 
 if(arg.length < 1){
-    console.log(czerwony+"Podaj argument: port"+clear);
+    console.log(red+"please input port"+clear);
     process.exit(1);
 }
 
 const express = require('express');
-const path = process.cwd();
-var app = express();
+const path = process.cwd() + "/" + (arg[1] || "");
+const app = express();
 
 app.use("/", express.static(path));
 
-const path_len = path.length + 7;
-app.listen(arg[0], function(){
-    console.log("/"+pod("", path_len+2, "-")+"\\");
-    console.log("| "+zielony+pod("http://localhost:"+arg[0], path_len)+clear+" |");
-    console.log("| "+cyjan+pod("path: "+path, path_len)+clear+" |");
-    console.log("\\"+pod("", path_len+2, "-")+"/");
+app.listen(arg[0], () => {
+    const link = "http://localhost:" + arg[0];
+    let path_len = path.length + 7;
+    if(path_len < link.length) path_len = link.length;
+
+    console.log("/" + pod("", path_len + 2, "-") + "\\");
+    console.log("| " + green + pod(link, path_len) + clear + " |");
+    console.log("| " + cyan + pod("path: " + path, path_len) + clear + " |");
+    console.log("\\" + pod("", path_len + 2, "-") + "/");
 })
 
 function pod(str, p, char=" "){
