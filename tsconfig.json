@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "module": "ES2022",
+        "target": "ES2022",
+        "moduleResolution": "node",
+        "paths": {},
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "outDir": "./dist"
+    },
+    "include": [
+       "./src"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

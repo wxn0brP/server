@@ -1,7 +1,11 @@
+import FalconFrame from "@wxn0brp/falcon-frame";
+import fs from "fs";
+import path from "path";
+
 const args = process.argv.slice(2);
-if(args.length == 1){
+if (args.length == 1) {
     const arg = args[0];
-    if(arg == "-h" || arg == "--help"){
+    if (arg == "-h" || arg == "--help") {
         console.log(`
 Usage: ${process.argv[1]} <path> <port>
 path: Path to serve, relative to current directory
@@ -16,16 +20,12 @@ const clear = "\x1b[0m";
 const green = "\x1b[32m";
 const cyan = "\x1b[36m";
 
-const express = require("express");
-const fs = require("fs");
-const path = require("path");
-
-const app = express();
+const app = new FalconFrame();
 const inputPath = args[0] || "";
 const basePath = path.isAbsolute(inputPath) ? inputPath : path.resolve(process.cwd(), inputPath);
 const port = args[1] || 8080;
 
-if(!fs.existsSync(basePath)){
+if (!fs.existsSync(basePath)) {
     console.log(red + "Invalid path: " + basePath + clear);
     process.exit(1);
 }
@@ -33,17 +33,17 @@ if(!fs.existsSync(basePath)){
 app.use(async (req, res, next) => {
     const requestedPath = path.join(basePath, req.path);
 
-    try{
+    try {
         const stats = await fs.promises.stat(requestedPath);
 
-        if(!stats.isDirectory())
+        if (!stats.isDirectory())
             return next();
 
         const indexFile = path.join(requestedPath, "index.html");
 
-        try{
+        try {
             await fs.promises.access(indexFile, fs.constants.F_OK);
-        }catch{
+        } catch {
             // Index file not found, return directory listing
             const files = await fs.promises.readdir(requestedPath, { withFileTypes: true });
 
@@ -59,18 +59,15 @@ app.use(async (req, res, next) => {
                     </li>`;
             });
 
-            res.send(`
+            res.setHeader("Content-Type", "text/html");
+            res.end(`
                 <html>
                     <head>
                         <title>Index of ${req.path}</title>
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        ${baseStyle}
                         <style>
-                            body{
-                                font-family: Arial, sans-serif;
-                                background-color: #222;
-                                color: white;
-                            }
                             ul{ list-style: none; padding: 0; }
                             li{ margin: 5px 0; }
                             a{ text-decoration: none; color: white; }
@@ -90,17 +87,23 @@ app.use(async (req, res, next) => {
             `);
             return;
         }
-    }catch{}
+    } catch { }
     return next();
 });
 
-app.use(express.static(basePath));
+app.static("/", basePath);
+
+const baseStyle = `<style>
+    body{ background-color: #111; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif }
+    a{ text-decoration: none; color: white; }
+    a:hover{ text-decoration: underline; }
+</style>`;
 
 app.use((req, res) => {
-    res.status(404).send("<style>body{ background-color: #222; color: white; }</style>404 Not found");
+    res.status(404).setHeader("Content-Type", "text/html").end(`${baseStyle}404 Not found<br><a href="/">[RETURN] Home</a>`);
 });
 
-app.listen(port, () => {
+app.listen(+port, () => {
     const link = "http://localhost:" + port;
     const maxLength = Math.max(link.length, basePath.length + 7);
 
@@ -110,9 +113,9 @@ app.listen(port, () => {
     console.log("\\" + pad("", maxLength + 2, "-") + "/");
 });
 
-function pad(str, length, char=" "){
-    while(str.length < length)
+function pad(str: string, length: number, char = " ") {
+    while (str.length < length)
         str += char;
-    
+
     return str;
 }
