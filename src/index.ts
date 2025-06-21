@@ -22,9 +22,18 @@ const green = "\x1b[32m";
 const cyan = "\x1b[36m";
 
 const app = new FalconFrame();
-const inputPath = args[0] || "";
+
+let inputPath = "";
+let port = 8080;
+
+args.forEach((arg) => {
+    if (!isNaN(+arg)) 
+        port = parseInt(arg, 10);
+    else 
+        inputPath = arg;
+});
+
 const basePath = path.isAbsolute(inputPath) ? inputPath : path.resolve(process.cwd(), inputPath);
-const port = args[1] || 8080;
 
 if (!fs.existsSync(basePath)) {
     console.log(red + "Invalid path: " + basePath + clear);

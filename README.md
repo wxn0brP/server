@@ -11,16 +11,27 @@ yarn global add github:wxn0brP/server#dist
 ## Usage
 
 ```bash
-server [PATH] [PORT]
+server [PATH or PORT] [PORT or PATH]
 ```
 
-- `[PATH]` (optional): Directory to serve files from. Defaults to the current directory.
-- `[PORT]` (optional): Port number for the server. Defaults to `8080`.
+* All arguments are optional and can be passed in any order.
+  * If it’s a number → treated as the `PORT`.
+  * Otherwise → treated as the `PATH`.
 
-Example:
+* Defaults:
+  * `PATH` = current directory (`.`)
+  * `PORT` = `8080`
+
+### Examples
+
 ```bash
-server ./public 3000
+server                # Serves ./ on port 8080
+server 3000           # Serves ./ on port 3000
+server ./public       # Serves ./public on port 8080
+server ./public 3000  # Serves ./public on port 3000
+server 3000 ./public  # Serves ./public on port 3000
 ```
+
 
 ## Features
 
