@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import FalconFrame from "@wxn0brp/falcon-frame";
 import fs from "fs";
 import path from "path";
