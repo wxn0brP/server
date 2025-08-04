@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import FalconFrame from "@wxn0brp/falcon-frame";
+import { createCORSPlugin } from "@wxn0brp/falcon-frame/plugins/cors";
 import fs from "fs";
 import path from "path";
 
@@ -22,6 +23,7 @@ const green = "\x1b[32m";
 const cyan = "\x1b[36m";
 
 const app = new FalconFrame();
+app.use(createCORSPlugin(["*"]).process);
 
 let inputPath = "";
 let port = 8080;
