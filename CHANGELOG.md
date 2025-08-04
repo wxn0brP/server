@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [1.1.3](https://github.com/wxn0brP/server/compare/v1.1.2...v1.1.3) (2025-08-04)
+
+
+### Bug Fixes
+
+* cors ([6d538a4](https://github.com/wxn0brP/server/commit/6d538a43b11dfc5201c6366112f3a55643b2de6b))
+
 ### [1.1.2](https://github.com/wxn0brP/server/compare/v1.1.1...v1.1.2) (2025-08-04)
 
 ### [1.1.1](https://github.com/wxn0brP/server/compare/v1.1.0...v1.1.1) (2025-08-03)
