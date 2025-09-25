@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import FalconFrame from "@wxn0brp/falcon-frame";
-import { createCORSPlugin } from "@wxn0brp/falcon-frame/plugins/cors";
 import fs from "fs";
 import path from "path";
 
@@ -23,15 +22,15 @@ const green = "\x1b[32m";
 const cyan = "\x1b[36m";
 
 const app = new FalconFrame();
-app.use(createCORSPlugin(["*"]).process);
+app.setOrigin(["*"]);
 
 let inputPath = "";
 let port = 8080;
 
 args.forEach((arg) => {
-    if (!isNaN(+arg)) 
+    if (!isNaN(+arg))
         port = parseInt(arg, 10);
-    else 
+    else
         inputPath = arg;
 });
 
@@ -106,13 +105,14 @@ app.use(async (req, res, next) => {
 app.static("/", basePath);
 
 const baseStyle = `<style>
-    body{ background-color: #111; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif }
+    body{ background-color: #111; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     a{ text-decoration: none; color: white; }
     a:hover{ text-decoration: underline; }
 </style>`;
 
 app.use((req, res) => {
-    res.status(404).setHeader("Content-Type", "text/html").end(`${baseStyle}404 Not found<br><a href="/">[RETURN] Home</a>`);
+    res.status(404).setHeader("Content-Type", "text/html")
+    return `${baseStyle}404 Not found<br><a href="/">[RETURN] Home</a>`;
 });
 
 app.listen(+port, () => {

@@ -14,9 +14,9 @@
     "author": "wxn0brP",
     "license": "MIT",
     "dependencies": {
-        "@wxn0brp/falcon-frame": "^0.0.21"
+        "@wxn0brp/falcon-frame": "^0.2.0"
     },
     "devDependencies": {
-        "@types/node": "^24.1.0"
+        "@types/node": "*"
     }
 }
