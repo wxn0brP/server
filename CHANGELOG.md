@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/wxn0brP/server/compare/v1.1.3...v1.2.0) (2025-09-25)
+
+
+### Features
+
+* update deps ([2d49d25](https://github.com/wxn0brP/server/commit/2d49d25be3d4ac9975600a1b4dd7310834397350))
+
 ### [1.1.3](https://github.com/wxn0brP/server/compare/v1.1.2...v1.1.3) (2025-08-04)
 
 
