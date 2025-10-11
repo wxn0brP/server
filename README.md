@@ -5,7 +5,7 @@ A lightweight static file server for quick use.
 ## Installation
 
 ```bash
-yarn global add github:wxn0brP/server#dist
+bin add -g github:wxn0brP/server
 ```
 
 ## Usage
