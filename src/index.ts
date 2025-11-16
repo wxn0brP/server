@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import FalconFrame from "@wxn0brp/falcon-frame";
-import fs from "fs";
+import fs, { existsSync } from "fs";
 import path from "path";
 
 const args = process.argv.slice(2);
@@ -42,6 +42,7 @@ if (!fs.existsSync(basePath)) {
     process.exit(1);
 }
 
+if (existsSync("public") && fs.statSync("public").isDirectory()) app.static("public");
 app.use(async (req, res, next) => {
     const requestedPath = path.join(basePath, req.path);
 
