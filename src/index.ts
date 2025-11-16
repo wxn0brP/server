@@ -42,7 +42,31 @@ if (!fs.existsSync(basePath)) {
     process.exit(1);
 }
 
+if (existsSync("suglite.json")) {
+    const suglite = JSON.parse(fs.readFileSync("suglite.json", "utf-8")) as {
+        server_map?: {
+            get: Record<string, string>;
+            dir: Record<string, string>;
+            redirect: Record<string, string>;
+        }
+    };
+
+    function _for(obj: Record<string, string>, fn: (key: string, value: string) => void) {
+        if (!obj) return;
+        for (const [key, value] of Object.entries(obj))
+            fn(key, value);
+    }
+    const map = suglite.server_map;
+
+    if (map) {
+        _for(map.get, (key, value) => app.get(key, (req, res) => res.sendFile(value)));
+        _for(map.dir, (key, value) => app.static(key, value));
+        _for(map.redirect, (key, value) => app.get(key, (req, res) => res.redirect(value)));
+    }
+}
+
 if (existsSync("public") && fs.statSync("public").isDirectory()) app.static("public");
+
 app.use(async (req, res, next) => {
     const requestedPath = path.join(basePath, req.path);
 
