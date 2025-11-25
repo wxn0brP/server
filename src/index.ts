@@ -62,7 +62,7 @@ if (existsSync("suglite.json")) {
 
     if (map) {
         _for(map.get, (key, value) => app.get(key, (req, res) => res.sendFile(value)));
-        _for(map.dir, (key, value) => app.static(removeLeadingHyphens(key), value));
+        _for(map.dir, (key, value) => app.static(removeLeadingHyphens(key), value, { errorIfDirNotFound: false }));
         _for(map.redirect, (key, value) => app.get(key, (req, res) => res.redirect(value)));
     }
 }
