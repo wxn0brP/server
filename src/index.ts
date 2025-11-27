@@ -131,6 +131,10 @@ app.use(async (req, res, next) => {
 
 app.static("/", basePath);
 
+const iconPath = process.env.SERVER_FAVICON;
+if (iconPath)
+    app.get("/favicon.ico", (req, res) => res.sendFile(iconPath));
+
 const baseStyle = `<style>
     body{ background-color: #111; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     a{ text-decoration: none; color: white; }

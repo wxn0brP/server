@@ -32,9 +32,16 @@ server ./public 3000  # Serves ./public on port 3000
 server 3000 ./public  # Serves ./public on port 3000
 ```
 
-
 ## Features
 
 - Serves files from a specified or default directory.
 - Automatically generates a file and directory listing if `index.html` is missing.
 - Handles spaces and special characters in file or directory names.
+
+## env
+
+SERVER_FAVICON="/path/to/favicon.ico" # Path to favicon, it's fallback if favicon doesn't exist on project
+
+## License
+
+MIT
