@@ -3,6 +3,7 @@
 import FalconFrame from "@wxn0brp/falcon-frame";
 import fs, { existsSync } from "fs";
 import path from "path";
+import { loadIfNeeded } from "./suglite";
 
 const args = process.argv.slice(2);
 if (args.length == 1) {
@@ -42,30 +43,7 @@ if (!fs.existsSync(basePath)) {
     process.exit(1);
 }
 
-if (existsSync("suglite.json")) {
-    const suglite = JSON.parse(fs.readFileSync("suglite.json", "utf-8")) as {
-        server_map?: {
-            get: Record<string, string>;
-            dir: Record<string, string>;
-            redirect: Record<string, string>;
-        }
-    };
-
-    function _for(obj: Record<string, string>, fn: (key: string, value: string) => void) {
-        if (!obj) return;
-        for (const [key, value] of Object.entries(obj))
-            fn(key, value);
-    }
-    const map = suglite.server_map;
-
-    const removeLeadingHyphens = (str: string) => str.replace(/^-+/, "");
-
-    if (map) {
-        _for(map.get, (key, value) => app.get(key, (req, res) => res.sendFile(value)));
-        _for(map.dir, (key, value) => app.static(removeLeadingHyphens(key), value, { errorIfDirNotFound: false }));
-        _for(map.redirect, (key, value) => app.get(key, (req, res) => res.redirect(value)));
-    }
-}
+if (loadIfNeeded(app)) { }
 else if (existsSync("public") && fs.statSync("public").isDirectory()) app.static("public");
 
 app.use(async (req, res, next) => {
