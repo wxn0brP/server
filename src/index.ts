@@ -26,6 +26,11 @@ const cyan = "\x1b[36m";
 const app = new FalconFrame();
 app.setOrigin(["*"]);
 
+app.use((req, res, next) => {
+    console.log(req.method + " " + req.url, Object.keys(req.body).length ? req.body : "");
+    next();
+});
+
 let inputPath = "";
 let port = 8080;
 
