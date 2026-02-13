@@ -13,7 +13,7 @@
     "author": "wxn0brP",
     "license": "MIT",
     "dependencies": {
-        "@wxn0brp/falcon-frame": "^0.4.0",
+        "@wxn0brp/falcon-frame": "^0.7.0",
         "json5": "^2.2.3"
     },
     "devDependencies": {
