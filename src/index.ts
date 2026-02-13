@@ -27,7 +27,11 @@ const app = new FalconFrame();
 app.setOrigin(["*"]);
 
 app.use((req, res, next) => {
-    console.log(req.method + " " + req.url, Object.keys(req.body).length ? req.body : "");
+    const { method, url } = req;
+    // SHUT UP IF THE FUCKING BROWSER SPAMS THE FAVICON REQUESTS
+    if (method == "GET" && url == "/favicon.ico")
+        return next();
+    console.log(method, url, Object.keys(req.body).length ? req.body : "");
     next();
 });
 
