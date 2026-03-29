@@ -4,6 +4,7 @@ import FalconFrame from "@wxn0brp/falcon-frame";
 import fs, { existsSync } from "fs";
 import path from "path";
 import { loadIfNeeded } from "./suglite";
+import { execSync } from "child_process";
 
 const args = process.argv.slice(2);
 if (args.length == 1) {
@@ -128,8 +129,19 @@ const baseStyle = `<style>
     a:hover{ text-decoration: underline; }
 </style>`;
 
+const notFoundArray = ["404.html", "not-found.html", "not_found.html"];
+
 app.use((req, res) => {
-    res.status(404).setHeader("Content-Type", "text/html")
+    res.status(404).setHeader("Content-Type", "text/html");
+
+    if (process.platform !== "win32") {
+        const files = execSync("find . -name " + notFoundArray.join(" -o -name ")).toString().split("\n");
+        if (files.length > 0) {
+            res.sendFile(path.join(basePath, files[0]));
+            return;
+        }
+    }
+
     return `${baseStyle}404 Not found<br><a href="/">[RETURN] Home</a>`;
 });
 
