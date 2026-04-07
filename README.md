@@ -5,7 +5,7 @@ A lightweight static file server for quick use.
 ## Installation
 
 ```bash
-bin add -g github:wxn0brP/server
+bun add -g github:wxn0brP/server
 ```
 
 ## Usage
@@ -15,8 +15,8 @@ server [PATH or PORT] [PORT or PATH]
 ```
 
 * All arguments are optional and can be passed in any order.
-  * If it’s a number → treated as the `PORT`.
-  * Otherwise → treated as the `PATH`.
+  * If it’s a number -> treated as the `PORT`.
+  * Otherwise -> treated as the `PATH`.
 
 * Defaults:
   * `PATH` = current directory (`.`)
