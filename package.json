@@ -13,11 +13,11 @@
     "author": "wxn0brP",
     "license": "MIT",
     "dependencies": {
-        "@wxn0brp/falcon-frame": "^0.8.0",
+        "@wxn0brp/falcon-frame": "^0.8.1",
         "json5": "^2.2.3"
     },
     "devDependencies": {
         "@types/bun": "*",
-        "typescript": "^5"
+        "typescript": "^6"
     }
 }
