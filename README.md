@@ -40,7 +40,9 @@ server 3000 ./public  # Serves ./public on port 3000
 
 ## env
 
+```bash
 SERVER_FAVICON="/path/to/favicon.ico" # Path to favicon, it's fallback if favicon doesn't exist on project
+```
 
 ## License
 
