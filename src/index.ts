@@ -135,7 +135,11 @@ app.use((req, res) => {
     res.status(404).setHeader("Content-Type", "text/html");
 
     if (process.platform !== "win32") {
-        const files = execSync("find . -name " + notFoundArray.join(" -o -name ")).toString().split("\n");
+        const files = execSync("find . -name " + notFoundArray.join(" -o -name "))
+            .toString()
+            .split("\n")
+            .filter(Boolean);
+
         if (files.length > 0) {
             res.sendFile(path.join(basePath, files[0]));
             return;
