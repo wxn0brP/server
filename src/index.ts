@@ -27,10 +27,12 @@ const cyan = "\x1b[36m";
 const app = new FalconFrame();
 app.setOrigin(["*"]);
 
+const isIcon = (url: string) => url.includes("icon") || url.endsWith(".ico");
+
 app.use((req, res, next) => {
     const { method, url } = req;
     // SHUT UP IF THE FUCKING BROWSER SPAMS THE FAVICON REQUESTS
-    if (method == "GET" && url == "/favicon.ico")
+    if (method == "GET" && isIcon(url))
         return next();
     console.log(method, url, Object.keys(req.body).length ? req.body : "");
     next();
