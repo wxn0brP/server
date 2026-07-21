@@ -1,22 +1,25 @@
 #!/usr/bin/env bun
 
 import FalconFrame from "@wxn0brp/falcon-frame";
-import fs, { existsSync } from "fs";
-import path from "path";
-import { loadIfNeeded } from "./suglite";
 import { execSync } from "child_process";
+import { existsSync, statSync } from "fs";
+import { access, constants, readdir, stat } from "fs/promises";
+import { isAbsolute, join, resolve } from "path";
+import { loadIfNeeded } from "./suglite";
 
 const args = process.argv.slice(2);
-if (args.length == 1) {
-    const arg = args[0];
-    if (arg == "-h" || arg == "--help") {
-        console.log(`
+if (args.length === 1) {
+	const arg = args[0];
+	if (arg === "-h" || arg === "--help") {
+		console.log(
+			`
 Usage: ${process.argv[1]} <path> <port>
 path: Path to serve, relative to current directory
 port: Port to listen on, defaults to 8080
-        `.trim());
-        process.exit(0);
-    }
+        `.trim(),
+		);
+		process.exit(0);
+	}
 }
 
 const red = "\x1b[31m";
@@ -25,70 +28,74 @@ const green = "\x1b[32m";
 const cyan = "\x1b[36m";
 
 const app = new FalconFrame();
-app.setOrigin(["*"]);
+app.setOrigin([
+	"*",
+]);
 
 const isIcon = (url: string) => url.includes("icon") || url.endsWith(".ico");
 
 app.use((req, res, next) => {
-    const { method, url } = req;
-    // SHUT UP IF THE FUCKING BROWSER SPAMS THE FAVICON REQUESTS
-    if (method == "GET" && isIcon(url))
-        return next();
-    console.log(method, url, Object.keys(req.body).length ? req.body : "");
-    next();
+	const { method, url } = req;
+	// SHUT UP IF THE FUCKING BROWSER SPAMS THE FAVICON REQUESTS
+	if (method === "GET" && isIcon(url)) return next();
+	console.log(method, url, Object.keys(req.body).length ? req.body : "");
+	next();
 });
 
 let inputPath = "";
 let port = 8080;
 
-args.forEach((arg) => {
-    if (!isNaN(+arg))
-        port = parseInt(arg, 10);
-    else
-        inputPath = arg;
+args.forEach(arg => {
+	if (!Number.isNaN(+arg)) port = parseInt(arg, 10);
+	else inputPath = arg;
 });
 
-const basePath = path.isAbsolute(inputPath) ? inputPath : path.resolve(process.cwd(), inputPath);
+const basePath = isAbsolute(inputPath)
+	? inputPath
+	: resolve(process.cwd(), inputPath);
 
-if (!fs.existsSync(basePath)) {
-    console.log(red + "Invalid path: " + basePath + clear);
-    process.exit(1);
+if (!existsSync(basePath)) {
+	console.log(red + "Invalid path: " + basePath + clear);
+	process.exit(1);
 }
 
-if (loadIfNeeded(app)) { }
-else if (existsSync("public") && fs.statSync("public").isDirectory()) app.static("public");
+if (loadIfNeeded(app)) {
+	// suglite loaded
+} else if (existsSync("public") && statSync("public").isDirectory())
+	app.static("public");
 
 app.use(async (req, res, next) => {
-    const requestedPath = path.join(basePath, req.path);
+	const requestedPath = join(basePath, req.path);
 
-    try {
-        const stats = await fs.promises.stat(requestedPath);
+	try {
+		const stats = await stat(requestedPath);
 
-        if (!stats.isDirectory())
-            return next();
+		if (!stats.isDirectory()) return next();
 
-        const indexFile = path.join(requestedPath, "index.html");
+		const indexFile = join(requestedPath, "index.html");
 
-        try {
-            await fs.promises.access(indexFile, fs.constants.F_OK);
-        } catch {
-            // Index file not found, return directory listing
-            const files = await fs.promises.readdir(requestedPath, { withFileTypes: true });
+		try {
+			await access(indexFile, constants.F_OK);
+		} catch {
+			// Index file not found, return directory listing
+			const files = await readdir(requestedPath, {
+				withFileTypes: true,
+			});
 
-            const fileList = files.map(file => {
-                const encodedName = encodeURIComponent(file.name);
-                const href = path.join(req.path, encodedName);
-                const flag = file.isDirectory() ? "[DIR]" : "[FILE]";
-                return `
+			const fileList = files.map(file => {
+				const encodedName = encodeURIComponent(file.name);
+				const href = join(req.path, encodedName);
+				const flag = file.isDirectory() ? "[DIR]" : "[FILE]";
+				return `
                     <li>
                         <a href="${href}">
                             ${flag} ${file.name}
                         </a>
                     </li>`;
-            });
+			});
 
-            res.setHeader("Content-Type", "text/html");
-            res.end(`
+			res.setHeader("Content-Type", "text/html");
+			res.end(`
                 <html>
                     <head>
                         <title>Index of ${req.path}</title>
@@ -113,17 +120,16 @@ app.use(async (req, res, next) => {
                     </body>
                 </html>
             `);
-            return;
-        }
-    } catch { }
-    return next();
+			return;
+		}
+	} catch {}
+	return next();
 });
 
 app.static("/", basePath);
 
 const iconPath = process.env.SERVER_FAVICON;
-if (iconPath)
-    app.get("/favicon.ico", (req, res) => res.sendFile(iconPath));
+if (iconPath) app.get("/favicon.ico", (req, res) => res.sendFile(iconPath));
 
 const baseStyle = `<style>
     body{ background-color: #111; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -131,39 +137,41 @@ const baseStyle = `<style>
     a:hover{ text-decoration: underline; }
 </style>`;
 
-const notFoundArray = ["404.html", "not-found.html", "not_found.html"];
+const notFoundArray = [
+	"404.html",
+	"not-found.html",
+	"not_found.html",
+];
 
 app.use((req, res) => {
-    res.status(404).setHeader("Content-Type", "text/html");
+	res.status(404).setHeader("Content-Type", "text/html");
 
-    if (process.platform !== "win32") {
-        const files = execSync("find . -name " + notFoundArray.join(" -o -name "))
-            .toString()
-            .split("\n")
-            .filter(Boolean);
+	if (process.platform !== "win32") {
+		const files = execSync("find . -name " + notFoundArray.join(" -o -name "))
+			.toString()
+			.split("\n")
+			.filter(Boolean);
 
-        if (files.length > 0) {
-            res.sendFile(path.join(basePath, files[0]));
-            return;
-        }
-    }
+		if (files.length > 0) {
+			res.sendFile(join(basePath, files[0]));
+			return;
+		}
+	}
 
-    return `${baseStyle}404 Not found<br><a href="/">[RETURN] Home</a>`;
+	return `${baseStyle}404 Not found<br><a href="/">[RETURN] Home</a>`;
 });
 
 app.listen(+port, () => {
-    const link = "http://localhost:" + port;
-    const maxLength = Math.max(link.length, basePath.length + 7);
+	const link = "http://localhost:" + port;
+	const maxLength = Math.max(link.length, basePath.length + 7);
 
-    console.log("/" + pad("", maxLength + 2, "-") + "\\");
-    console.log("| " + green + pad(link, maxLength) + clear + " |");
-    console.log("| " + cyan + pad("Path: " + basePath, maxLength) + clear + " |");
-    console.log("\\" + pad("", maxLength + 2, "-") + "/");
+	console.log("/" + pad("", maxLength + 2, "-") + "\\");
+	console.log("| " + green + pad(link, maxLength) + clear + " |");
+	console.log("| " + cyan + pad("Path: " + basePath, maxLength) + clear + " |");
+	console.log("\\" + pad("", maxLength + 2, "-") + "/");
 });
 
 function pad(str: string, length: number, char = " ") {
-    while (str.length < length)
-        str += char;
-
-    return str;
+	while (str.length < length) str += char;
+	return str;
 }
