@@ -1,43 +1,42 @@
 #!/usr/bin/env bun
 
-import FalconFrame from "@wxn0brp/falcon-frame";
 import { execSync } from "child_process";
 import { existsSync, statSync } from "fs";
 import { access, constants, readdir, stat } from "fs/promises";
 import { isAbsolute, join, resolve } from "path";
 import { loadIfNeeded } from "./suglite";
+import { escapeHtml, isIconPath, pad } from "./utils";
+import {
+	app,
+	baseStyle,
+	clear,
+	cyan,
+	green,
+	iconPath,
+	notFoundArray,
+	red,
+} from "./vars";
 
 const args = process.argv.slice(2);
-if (args.length === 1) {
-	const arg = args[0];
-	if (arg === "-h" || arg === "--help") {
-		console.log(
-			`
+if (args.includes("-h") || args.includes("--help")) {
+	console.log(
+		`
 Usage: ${process.argv[1]} <path> <port>
 path: Path to serve, relative to current directory
 port: Port to listen on, defaults to 8080
-        `.trim(),
-		);
-		process.exit(0);
-	}
+`.trim(),
+	);
+	process.exit(0);
 }
 
-const red = "\x1b[31m";
-const clear = "\x1b[0m";
-const green = "\x1b[32m";
-const cyan = "\x1b[36m";
-
-const app = new FalconFrame();
 app.setOrigin([
 	"*",
 ]);
 
-const isIcon = (url: string) => url.includes("icon") || url.endsWith(".ico");
-
 app.use((req, res, next) => {
-	const { method, url } = req;
+	const { method, url, path } = req;
 	// SHUT UP IF THE FUCKING BROWSER SPAMS THE FAVICON REQUESTS
-	if (method === "GET" && isIcon(url)) return next();
+	if (method === "GET" && isIconPath(path)) return next();
 	console.log(method, url, Object.keys(req.body).length ? req.body : "");
 	next();
 });
@@ -84,42 +83,57 @@ app.use(async (req, res, next) => {
 
 			const fileList = files.map(file => {
 				const encodedName = encodeURIComponent(file.name);
-				const href = join(req.path, encodedName);
+				const base = req.path.endsWith("/") ? req.path : req.path + "/";
+				const href = escapeHtml(base + encodedName);
 				const flag = file.isDirectory() ? "[DIR]" : "[FILE]";
 				return `
-                    <li>
-                        <a href="${href}">
-                            ${flag} ${file.name}
-                        </a>
-                    </li>`;
+			<li>
+				<a href="${href}">
+					<span class="${file.isDirectory() ? "dir" : "file"}">${flag}</span>
+					${escapeHtml(file.name)}
+				</a>
+			</li>`;
 			});
 
 			res.setHeader("Content-Type", "text/html");
-			res.end(`
-                <html>
-                    <head>
-                        <title>Index of ${req.path}</title>
-                        <meta charset="UTF-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        ${baseStyle}
-                        <style>
-                            ul{ list-style: none; padding: 0; }
-                            li{ margin: 5px 0; }
-                            a{ text-decoration: none; color: white; }
-                            a:hover{ text-decoration: underline; }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>Index of ${req.path}</h1>
-                        Files and directories count: ${fileList.length}
-                        <ul>
-                            <li><a href="../">[RETURN] ..</a></li>
-                            ${fileList.join("")}
-                            <li><a href="../">[RETURN] ..</a></li>
-                        </ul>
-                    </body>
-                </html>
-            `);
+			res.end(`<!DOCTYPE html>
+<html>
+	<head>
+		<title>Index of ${escapeHtml(req.path)}</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		${baseStyle}
+		<style>
+			ul{
+				padding: 0;
+				border: 1px solid var(--border);
+				border-radius: 8px;
+				overflow: hidden;
+				background: var(--bg-elev);
+			}
+			li{
+				border-bottom: 1px solid var(--border);
+				padding: 0.5rem 1rem;
+			}
+			li:last-child{ border-bottom: none; }
+			li:hover{ background: #1b1d22; }
+			.dir{ color: var(--accent); }
+			.file{ color: var(--muted); }
+		</style>
+	</head>
+	<body>
+		<main>
+			<h3>Index of ${escapeHtml(req.path)}</h3>
+			<span>Files and directories count: ${fileList.length}</span>
+			<ul>
+				<li><a href="../">[RETURN] ..</a></li>
+				${fileList.join("")}
+				<li><a href="../">[RETURN] ..</a></li>
+			</ul>
+		</main>
+	</body>
+</html>
+`);
 			return;
 		}
 	} catch {}
@@ -128,26 +142,22 @@ app.use(async (req, res, next) => {
 
 app.static("/", basePath);
 
-const iconPath = process.env.SERVER_FAVICON;
-if (iconPath) app.get("/favicon.ico", (req, res) => res.sendFile(iconPath));
-
-const baseStyle = `<style>
-    body{ background-color: #111; color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    a{ text-decoration: none; color: white; }
-    a:hover{ text-decoration: underline; }
-</style>`;
-
-const notFoundArray = [
-	"404.html",
-	"not-found.html",
-	"not_found.html",
-];
+// if icon
+app.use((req, res, next) => {
+	if (req.method !== "GET" && req.method !== "HEAD") return next();
+	if (!isIconPath(req.path)) return next();
+	if (iconPath) return res.sendFile(iconPath);
+	res.setHeader("Cache-Control", "public, max-age=86400");
+	res.status(204).end();
+});
 
 app.use((req, res) => {
 	res.status(404).setHeader("Content-Type", "text/html");
 
 	if (process.platform !== "win32") {
-		const files = execSync("find . -name " + notFoundArray.join(" -o -name "))
+		const files = execSync(
+			`find ${basePath} -name ${notFoundArray.join(" -o -name ")}`,
+		)
 			.toString()
 			.split("\n")
 			.filter(Boolean);
@@ -158,7 +168,22 @@ app.use((req, res) => {
 		}
 	}
 
-	return `${baseStyle}404 Not found<br><a href="/">[RETURN] Home</a>`;
+	return `<!DOCTYPE html>
+<html>
+	<head>
+		<title>404 Not found</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		${baseStyle}
+	</head>
+	<body>
+		<main style="text-align: center;">
+			<h1>404 Not found</h1>
+			<p>The requested page could not be found.</p>
+			<p><a href="/">[RETURN] Home</a></p>
+		</main>
+	</body>
+</html>`;
 });
 
 app.listen(+port, () => {
@@ -170,8 +195,3 @@ app.listen(+port, () => {
 	console.log("| " + cyan + pad("Path: " + basePath, maxLength) + clear + " |");
 	console.log("\\" + pad("", maxLength + 2, "-") + "/");
 });
-
-function pad(str: string, length: number, char = " ") {
-	while (str.length < length) str += char;
-	return str;
-}
