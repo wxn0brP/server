@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 
 import { execSync } from "child_process";
-import { existsSync, statSync } from "fs";
+import { existsSync, readFileSync, statSync } from "fs";
 import { access, constants, readdir, stat } from "fs/promises";
 import { isAbsolute, join, resolve } from "path";
 import { loadIfNeeded } from "./suglite";
@@ -26,6 +26,14 @@ path: Path to serve, relative to current directory
 port: Port to listen on, defaults to 8080
 `.trim(),
 	);
+	process.exit(0);
+}
+
+if (args.includes("-v") || args.includes("--version")) {
+	const pkg = JSON.parse(
+		readFileSync(join(import.meta.dirname, "..", "package.json"), "utf-8"),
+	);
+	console.log("Version: " + pkg.version);
 	process.exit(0);
 }
 
