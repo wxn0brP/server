@@ -5,7 +5,8 @@
     "main": "./src/index.ts",
     "type": "module",
     "bin": {
-        "server": "./src/index.ts"
+        "server": "./src/index.ts",
+        "wxn-server": "./src/index.ts"
     },
     "scripts": {
         "start": "bun run src/index.ts"
