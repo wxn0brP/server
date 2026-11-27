@@ -4,6 +4,7 @@ import { execSync } from "child_process";
 import { existsSync, readFileSync, statSync } from "fs";
 import { access, constants, readdir, stat } from "fs/promises";
 import { isAbsolute, join, resolve } from "path";
+import { createInterface } from "readline";
 import { loadIfNeeded } from "./suglite";
 import { escapeHtml, isIconPath, pad } from "./utils";
 import {
@@ -45,7 +46,7 @@ app.use((req, res, next) => {
 	const { method, url, path } = req;
 	// SHUT UP IF THE FUCKING BROWSER SPAMS THE FAVICON REQUESTS
 	if (method === "GET" && isIconPath(path)) return next();
-	console.log(method, url, Object.keys(req.body).length ? req.body : "");
+	log(method, url, Object.keys(req.body).length ? req.body : "");
 	next();
 });
 
@@ -64,6 +65,65 @@ const basePath = isAbsolute(inputPath)
 if (!existsSync(basePath)) {
 	console.log(red + "Invalid path: " + basePath + clear);
 	process.exit(1);
+}
+
+const rl =
+	process.stdin.isTTY && !process.env.SUGLITE_BUILD_ID
+		? createInterface({
+				input: process.stdin,
+				output: process.stdout,
+				prompt: "> ",
+			})
+		: null;
+
+function log(...args: any[]) {
+	if (rl?.terminal) process.stdout.write("\r\x1b[K");
+	console.log(...args);
+	if (rl?.terminal) rl.prompt();
+}
+
+function opener() {
+	if (process.env.BROWSER) return process.env.BROWSER.split(/\s+/);
+	if (process.platform === "darwin")
+		return [
+			"open",
+		];
+	if (process.platform === "win32")
+		return [
+			"cmd",
+			"/c",
+			"start",
+			"",
+		];
+	return [
+		"xdg-open",
+	];
+}
+
+async function openRoot() {
+	const url = `http://localhost:${port}/`;
+	try {
+		const proc = Bun.spawn(
+			[
+				...opener(),
+				url,
+			],
+			{
+				stdin: "ignore",
+				stdout: "ignore",
+				stderr: "ignore",
+			},
+		);
+		if ((await proc.exited) !== 0) log(red + "Failed to open: " + url + clear);
+		else log(green + "Opening " + url + clear);
+	} catch {
+		log(red + "Failed to open: " + url + clear);
+	}
+}
+
+if (rl) {
+	rl.on("line", () => openRoot());
+	rl.on("SIGINT", () => process.exit(130));
 }
 
 if (loadIfNeeded(app)) {
@@ -202,4 +262,9 @@ app.listen(+port, () => {
 	console.log("| " + green + pad(link, maxLength) + clear + " |");
 	console.log("| " + cyan + pad("Path: " + basePath, maxLength) + clear + " |");
 	console.log("\\" + pad("", maxLength + 2, "-") + "/");
+
+	if (rl) {
+		console.log(cyan + "Press Enter to open it in the browser" + clear);
+		rl.prompt();
+	}
 });
